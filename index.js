@@ -413,8 +413,8 @@ const drawCanvas = async () => {
       for (let x = 0; x < squares; x++) {
         const hashOffset = 2 + (y * squares) + x
         const hashLetter = fxhash[hashOffset].toLowerCase()
-        const isUpperCase = !(hashLetter === fxhash[hashOffset])
-        console.log(hashOffset + ' >> ' + fxhash[hashOffset] + ' >> ' + hashLetter + ' >> ' + isUpperCase)
+        const isLowerCase = (hashLetter === fxhash[hashOffset])
+        console.log(hashOffset + ' >> ' + fxhash[hashOffset] + ' >> ' + hashLetter + ' >> ' + isLowerCase)
         const colours = features.alphaMap[hashLetter].colours
         const c1 = features.colours[colours[0]]
         let c2 = null
@@ -435,7 +435,7 @@ const drawCanvas = async () => {
           }
         }
         //  If uppercase set light grey dot
-        if (isUpperCase) {
+        if (isLowerCase) {
           ctx.fillStyle = 'black'
           ctx.beginPath()
           ctx.moveTo(album.x + border + (squareSize * x) + (border * x) - (squareSize / 80), album.y + border + (squareSize * y) + (border * y) - (squareSize / 80))
@@ -480,8 +480,8 @@ const drawCanvas = async () => {
         const middleRadius = innerRadius + ((outerRadius - innerRadius) / 2)
 
         const hashLetter = fxhash[hashPoints].toLowerCase()
-        const isUpperCase = !(hashLetter === fxhash[hashPoints])
-        // console.log(hashPoints + ' >> ' + fxhash[hashPoints] + ' >> ' + hashLetter + ' >> ' + isUpperCase)
+        const isLowerCase = (hashLetter === fxhash[hashPoints])
+        // console.log(hashPoints + ' >> ' + fxhash[hashPoints] + ' >> ' + hashLetter + ' >> ' + isLowerCase)
         const colours = features.alphaMap[hashLetter].colours
         const c1 = features.colours[colours[0]]
         let c2 = null
@@ -586,7 +586,7 @@ const drawCanvas = async () => {
         }
 
         //  If uppercase set light grey dot
-        if (isUpperCase) {
+        if (isLowerCase) {
           ctx.fillStyle = 'black'
 
           const cx0 = Math.sin((startAngle - (outerAngleBorder / 4)) * Math.PI / 180) * (r1 * 1.01)
