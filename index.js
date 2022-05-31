@@ -21,6 +21,7 @@ const ratio = 1
 // const startTime = new Date().getTime() // so we can figure out how long since the scene started
 let drawn = false
 let highRes = false // display high or low res
+let full = false
 const features = {}
 const nextFrame = null
 
@@ -196,7 +197,7 @@ const makeFeatures = () => {
     },
     j: {
       type: 'square',
-      colours: [9],
+      colours: [9, 0],
       split: null
     },
     k: {
@@ -206,52 +207,52 @@ const makeFeatures = () => {
     },
     l: {
       type: 'square',
-      colours: [0, 1],
+      colours: [1, 0],
       split: 'horizontal'
     },
     m: {
       type: 'square',
-      colours: [0, 2],
+      colours: [2, 0],
       split: 'horizontal'
     },
     n: {
       type: 'square',
-      colours: [0, 3],
+      colours: [3, 0],
       split: 'horizontal'
     },
     o: {
       type: 'square',
-      colours: [0, 4],
+      colours: [4, 0],
       split: 'horizontal'
     },
     p: {
       type: 'square',
-      colours: [0, 5],
+      colours: [5, 0],
       split: 'horizontal'
     },
     q: {
       type: 'square',
-      colours: [0, 6],
+      colours: [6, 0],
       split: 'horizontal'
     },
     r: {
       type: 'square',
-      colours: [0, 7],
+      colours: [7, 0],
       split: 'horizontal'
     },
     s: {
       type: 'square',
-      colours: [0, 8],
+      colours: [8, 0],
       split: 'horizontal'
     },
     t: {
       type: 'square',
-      colours: [0, 9],
+      colours: [9, 1],
       split: 'horizontal'
     },
     u: {
       type: 'square',
-      colours: [1, 0],
+      colours: [0, 1],
       split: 'horizontal'
     },
     v: {
@@ -261,22 +262,22 @@ const makeFeatures = () => {
     },
     w: {
       type: 'square',
-      colours: [1, 2],
+      colours: [2, 1],
       split: 'horizontal'
     },
     x: {
       type: 'square',
-      colours: [1, 3],
+      colours: [3, 1],
       split: 'horizontal'
     },
     y: {
       type: 'square',
-      colours: [1, 4],
+      colours: [4, 1],
       split: 'horizontal'
     },
     z: {
       type: 'square',
-      colours: [1, 5],
+      colours: [5, 1],
       split: 'horizontal'
     }
   }
@@ -394,6 +395,13 @@ const drawCanvas = async () => {
     w: w * 0.8,
     h: h * 0.8
   }
+  if (full) {
+    album.x = 0
+    album.y = 0
+    album.w = w
+    album.h = h
+  }
+
   ctx.fillStyle = 'black'
   ctx.fillRect(album.x, album.y, album.w, album.h)
 
@@ -403,8 +411,9 @@ const drawCanvas = async () => {
   ctx.fillStyle = grd
   ctx.fillRect(album.x, album.y + album.h, album.w, h * 0.1)
 
-  //  Now draw the squares
   const border = album.w / 49
+
+  //  Now draw the squares
   if (features.type === 'grid') {
     const subBorder = border / 4
     const squares = 7
@@ -434,7 +443,7 @@ const drawCanvas = async () => {
             ctx.fillRect(album.x + border + (squareSize * x) + (border * x), album.y + border + (squareSize * y) + (border * y), squareSize, squareSize)
           }
         }
-        //  If uppercase set light grey dot
+        //  If lowercase set cut off corner
         if (isLowerCase) {
           ctx.fillStyle = 'black'
           ctx.beginPath()
@@ -446,6 +455,80 @@ const drawCanvas = async () => {
         }
       }
     }
+  }
+
+  if (features.type === 'strip') {
+    const subBorder = border / 4
+    const squareSize = (album.h - (border * 2) - (subBorder * 16)) / 17
+    const leftOffset = (squareSize + subBorder) * 3
+
+    for (let x = 0; x < 3; x++) {
+      for (let y = 0; y < 17; y++) {
+        const hashOffset = 2 + (x * 17) + y
+        if (hashOffset > 50) break
+        const hashLetter = fxhash[hashOffset].toLowerCase()
+        const isLowerCase = (hashLetter === fxhash[hashOffset])
+        console.log(hashOffset + ' >> ' + fxhash[hashOffset] + ' >> ' + hashLetter + ' >> ' + isLowerCase)
+        const colours = features.alphaMap[hashLetter].colours
+        const c1 = features.colours[colours[0]]
+        let c2 = null
+        if (colours.length > 1) c2 = features.colours[colours[1]]
+        ctx.fillStyle = `hsl(${c1.h}, ${c1.s}%, ${c1.l}%)`
+        if ('1234567890'.includes(hashLetter)) {
+          //  Circle
+          ctx.beginPath()
+          ctx.arc(album.x + border + (squareSize * x) + (subBorder * x) + (squareSize / 2) + leftOffset, album.y + border + (squareSize * y) + (subBorder * y) + (squareSize / 2), (squareSize / 2), 0, 2 * Math.PI)
+          ctx.fill()
+        } else {
+          if (c2) {
+            ctx.fillRect(album.x + border + (squareSize * x) + (subBorder * x) + leftOffset, album.y + border + (squareSize * y) + (subBorder * y), squareSize, squareSize / 2 - (subBorder / 2))
+            ctx.fillStyle = `hsl(${c2.h}, ${c2.s}%, ${c2.l}%)`
+            ctx.fillRect(album.x + border + (squareSize * x) + (subBorder * x) + leftOffset, album.y + border + (squareSize * y) + (subBorder * y) + (squareSize / 2) + (subBorder / 2), squareSize, squareSize / 2 - (subBorder / 2))
+          } else {
+            ctx.fillRect(album.x + border + (squareSize * x) + (subBorder * x) + leftOffset, album.y + border + (squareSize * y) + (subBorder * y), squareSize, squareSize)
+          }
+        }
+        //  If lowercase set cut off corner
+        if (isLowerCase) {
+          ctx.fillStyle = 'black'
+          ctx.beginPath()
+          ctx.moveTo(album.x + border + (squareSize * x) + (subBorder * x) - (squareSize / 80) + leftOffset, album.y + border + (squareSize * y) + (subBorder * y) - (squareSize / 80))
+          ctx.lineTo(album.x + border + (squareSize * x) + (subBorder * x) + (squareSize * 0.2) + leftOffset, album.y + border + (squareSize * y) + (subBorder * y) - (squareSize / 80))
+          ctx.lineTo(album.x + border + (squareSize * x) + (subBorder * x) - (squareSize / 80) + leftOffset, album.y + border + (squareSize * y) + (subBorder * y) + (squareSize * 0.2))
+          ctx.closePath()
+          ctx.fill()
+        }
+      }
+    }
+
+    //  Now write CATT33 on the right hand side
+    const C3 = features.colours[features.alphaMap.c.colours[0]]
+    ctx.fillStyle = `hsl(${C3.h}, ${C3.s}%, ${C3.l}%)`
+    ctx.fillRect(album.x + album.w - squareSize / 2, album.y + album.h - ((squareSize + subBorder) * 8) - border + subBorder, squareSize / 2, squareSize)
+
+    const A = features.colours[features.alphaMap.a.colours[0]]
+    ctx.fillStyle = `hsl(${A.h}, ${A.s}%, ${A.l}%)`
+    ctx.fillRect(album.x + album.w - squareSize / 2, album.y + album.h - ((squareSize + subBorder) * 7) - border + subBorder, squareSize / 2, squareSize)
+
+    const T1 = features.colours[features.alphaMap.t.colours[0]]
+    const T2 = features.colours[features.alphaMap.t.colours[1]]
+    ctx.fillStyle = `hsl(${T1.h}, ${T1.s}%, ${T1.l}%)`
+    ctx.fillRect(album.x + album.w - squareSize / 2, album.y + album.h - ((squareSize + subBorder) * 6) - border + subBorder, squareSize / 2, (squareSize / 2) - (subBorder / 2))
+    ctx.fillStyle = `hsl(${T2.h}, ${T2.s}%, ${T2.l}%)`
+    ctx.fillRect(album.x + album.w - squareSize / 2, album.y + album.h - ((squareSize + subBorder) * 6) + (squareSize / 2) + (subBorder / 2) - border + subBorder, squareSize / 2, (squareSize / 2) - (subBorder / 2))
+
+    ctx.fillStyle = `hsl(${T1.h}, ${T1.s}%, ${T1.l}%)`
+    ctx.fillRect(album.x + album.w - squareSize / 2, album.y + album.h - ((squareSize + subBorder) * 5) - border + subBorder, squareSize / 2, (squareSize / 2) - (subBorder / 2))
+    ctx.fillStyle = `hsl(${T2.h}, ${T2.s}%, ${T2.l}%)`
+    ctx.fillRect(album.x + album.w - squareSize / 2, album.y + album.h - ((squareSize + subBorder) * 5) + (squareSize / 2) + (subBorder / 2) - border + subBorder, squareSize / 2, (squareSize / 2) - (subBorder / 2))
+
+    ctx.fillStyle = `hsl(${C3.h}, ${C3.s}%, ${C3.l}%)`
+    ctx.beginPath()
+    ctx.arc(album.x + album.w, album.y + album.h - ((squareSize + subBorder) * 4) - border + subBorder + (squareSize / 2), squareSize / 2, 0.5 * Math.PI, 1.5 * Math.PI)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.arc(album.x + album.w, album.y + album.h - ((squareSize + subBorder) * 3) - border + subBorder + (squareSize / 2), squareSize / 2, 0.5 * Math.PI, 1.5 * Math.PI)
+    ctx.fill()
   }
 
   if (features.type === 'circles') {
@@ -585,8 +668,8 @@ const drawCanvas = async () => {
           }
         }
 
-        //  If uppercase set light grey dot
-        if (isLowerCase) {
+        //  If lowercase set cut off corner
+        if (isLowerCase && !'1234567890'.includes(hashLetter)) {
           ctx.fillStyle = 'black'
 
           const cx0 = Math.sin((startAngle - (outerAngleBorder / 4)) * Math.PI / 180) * (r1 * 1.01)
@@ -639,6 +722,11 @@ document.addEventListener('keypress', async (e) => {
   //   Toggle highres mode
   if (e.key === 'h') {
     highRes = !highRes
+    await layoutCanvas()
+  }
+
+  if (e.key === 'f') {
+    full = !full
     await layoutCanvas()
   }
 })
