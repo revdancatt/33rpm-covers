@@ -44,6 +44,8 @@ const makeFeatures = () => {
     }
   }
 
+  features.type = 'circles'
+
   features.colours = [{
     h: 155,
     s: 24,
@@ -403,175 +405,213 @@ const drawCanvas = async () => {
 
   //  Now draw the squares
   const border = album.w / 49
-  const subBorder = border / 4
-  /*
-  const squares = 7
-  const squareSize = (album.w - (border * 8)) / squares
-  for (let y = 0; y < squares; y++) {
-    for (let x = 0; x < squares; x++) {
-      const hashOffset = 2 + (y * squares) + x
-      const hashLetter = fxhash[hashOffset].toLowerCase()
-      const colours = features.alphaMap[hashLetter].colours
-      const c1 = features.colours[colours[0]]
-      let c2 = null
-      if (colours.length > 1) c2 = features.colours[colours[1]]
-      ctx.fillStyle = `hsl(${c1.h}, ${c1.s}%, ${c1.l}%)`
-      if ('1234567890'.includes(hashLetter)) {
-        //  Circle
-        ctx.beginPath()
-        ctx.arc(album.x + border + (squareSize * x) + (border * x) + (squareSize / 2), album.y + border + (squareSize * y) + (border * y) + (squareSize / 2), (squareSize / 2), 0, 2 * Math.PI)
-        ctx.fill()
-      } else {
-        if (c2) {
-          ctx.fillRect(album.x + border + (squareSize * x) + (border * x), album.y + border + (squareSize * y) + (border * y), squareSize / 2 - subBorder, squareSize)
-          ctx.fillStyle = `hsl(${c2.h}, ${c2.s}%, ${c2.l}%)`
-          ctx.fillRect(album.x + border + (squareSize * x) + (border * x) + (squareSize / 2) + subBorder, album.y + border + (squareSize * y) + (border * y), squareSize / 2 - subBorder, squareSize)
-        } else {
-          ctx.fillRect(album.x + border + (squareSize * x) + (border * x), album.y + border + (squareSize * y) + (border * y), squareSize, squareSize)
-        }
-      }
-    }
-  }
-  */
-
-  const circles = [{
-    segments: 21,
-    outerRadius: 1,
-    innerRadius: 0.8,
-    gap: 10
-  },
-  {
-    segments: 17,
-    outerRadius: 0.78,
-    innerRadius: 0.58,
-    gap: 11
-  },
-  {
-    segments: 11,
-    outerRadius: 0.56,
-    innerRadius: 0.36,
-    gap: 12
-  }
-  ]
-  let hashPoints = 2
-  for (const circle of circles) {
-    const outerAngle = 360 / circle.segments
-    const outerAngleBorder = outerAngle / circle.gap
-    for (let segment = 0; segment < circle.segments; segment++) {
-      //  Set radiuses
-      const outerRadius = circle.outerRadius
-      const innerRadius = circle.innerRadius
-      const middleRadius = innerRadius + ((outerRadius - innerRadius) / 2)
-
-      const hashLetter = fxhash[hashPoints].toLowerCase()
-      console.log(hashPoints + ' >> ' + hashLetter)
-      const colours = features.alphaMap[hashLetter].colours
-      const c1 = features.colours[colours[0]]
-      let c2 = null
-      if (colours.length > 1) c2 = features.colours[colours[1]]
-
-      const startAngle = segment * outerAngle + (outerAngleBorder / 2) + 180
-      const endAngle = (segment + 1) * outerAngle - (outerAngleBorder / 2) + 180
-      const r1 = ((album.h / 2) - border) * outerRadius * 0.95
-      const r2 = ((album.h / 2) - border) * middleRadius * 0.95
-      const r3 = ((album.h / 2) - border) * innerRadius * 0.95
-
-      const x0 = Math.sin(startAngle * Math.PI / 180) * r1
-      const y0 = Math.cos(startAngle * Math.PI / 180) * r1
-      const x1 = Math.sin(startAngle * Math.PI / 180) * r2
-      const y1 = Math.cos(startAngle * Math.PI / 180) * r2
-      const x2 = Math.sin(endAngle * Math.PI / 180) * r3
-      const y2 = Math.cos(endAngle * Math.PI / 180) * r3
-      const x3 = Math.sin(endAngle * Math.PI / 180) * r2
-      const y3 = Math.cos(endAngle * Math.PI / 180) * r2
-
-      if (c2) {
-        ctx.fillStyle = `hsl(${c2.h}, ${c2.s}%, ${c2.l}%)`
-        ctx.beginPath()
-        ctx.moveTo(w - (x0 + album.x + (album.w / 2)), y0 + album.y + (album.h / 2))
-        //  Go one way
-        for (let a = 0; a < 24; a++) {
-          const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r1
-          const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r1
-          ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
-        }
-        ctx.lineTo(w - (x3 + album.x + (album.w / 2)), y3 + album.y + (album.h / 2))
-        //  Now go the other way
-        for (let a = 23; a >= 0; a--) {
-          const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
-          const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
-          ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
-        }
-        ctx.closePath()
-        ctx.fill()
-
+  if (features.type === 'grid') {
+    const subBorder = border / 4
+    const squares = 7
+    const squareSize = (album.w - (border * 8)) / squares
+    for (let y = 0; y < squares; y++) {
+      for (let x = 0; x < squares; x++) {
+        const hashOffset = 2 + (y * squares) + x
+        const hashLetter = fxhash[hashOffset].toLowerCase()
+        const isUpperCase = !(hashLetter === fxhash[hashOffset])
+        console.log(hashOffset + ' >> ' + fxhash[hashOffset] + ' >> ' + hashLetter + ' >> ' + isUpperCase)
+        const colours = features.alphaMap[hashLetter].colours
+        const c1 = features.colours[colours[0]]
+        let c2 = null
+        if (colours.length > 1) c2 = features.colours[colours[1]]
         ctx.fillStyle = `hsl(${c1.h}, ${c1.s}%, ${c1.l}%)`
-        ctx.beginPath()
-        ctx.moveTo(w - (x1 + album.x + (album.w / 2)), y1 + album.y + (album.h / 2))
-        //  Go one way
-        for (let a = 0; a < 24; a++) {
-          const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
-          const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
-          ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
-        }
-        ctx.lineTo(w - (x2 + album.x + (album.w / 2)), y2 + album.y + (album.h / 2))
-        //  Now go the other way
-        for (let a = 23; a >= 0; a--) {
-          const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r3
-          const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r3
-          ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
-        }
-        ctx.closePath()
-        ctx.fill()
-
-        //  Now draw a line between them
-        const x = Math.sin((startAngle + ((endAngle - startAngle) * 0 / 23)) * Math.PI / 180) * r2
-        const y = Math.cos((startAngle + ((endAngle - startAngle) * 0 / 23)) * Math.PI / 180) * r2
-        ctx.strokeStyle = 'black'
-        ctx.lineWidth = album.w / 120
-        ctx.beginPath()
-        ctx.moveTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
-        for (let a = 1; a < 24; a++) {
-          const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
-          const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
-          ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
-        }
-        ctx.stroke()
-      } else {
-        ctx.fillStyle = `hsl(${c1.h}, ${c1.s}%, ${c1.l}%)`
-        ctx.beginPath()
-        ctx.moveTo(w - (x0 + album.x + (album.w / 2)), y0 + album.y + (album.h / 2))
-        //  Go one way
-        for (let a = 0; a < 24; a++) {
-          const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r1
-          const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r1
-          ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
-        }
-        ctx.lineTo(w - (x2 + album.x + (album.w / 2)), y2 + album.y + (album.h / 2))
-        //  Now go the other way
-        for (let a = 23; a >= 0; a--) {
-          const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r3
-          const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r3
-          ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
-        }
-        ctx.closePath()
-        ctx.fill()
-
-        //  Set dot
         if ('1234567890'.includes(hashLetter)) {
-          const dx = Math.sin((startAngle + ((endAngle - startAngle) * 0.5)) * Math.PI / 180) * (r3 + ((r1 - r3) / 2))
-          const dy = Math.cos((startAngle + ((endAngle - startAngle) * 0.5)) * Math.PI / 180) * (r3 + ((r1 - r3) / 2))
+          //  Circle
+          ctx.beginPath()
+          ctx.arc(album.x + border + (squareSize * x) + (border * x) + (squareSize / 2), album.y + border + (squareSize * y) + (border * y) + (squareSize / 2), (squareSize / 2), 0, 2 * Math.PI)
+          ctx.fill()
+        } else {
+          if (c2) {
+            ctx.fillRect(album.x + border + (squareSize * x) + (border * x), album.y + border + (squareSize * y) + (border * y), squareSize / 2 - subBorder, squareSize)
+            ctx.fillStyle = `hsl(${c2.h}, ${c2.s}%, ${c2.l}%)`
+            ctx.fillRect(album.x + border + (squareSize * x) + (border * x) + (squareSize / 2) + subBorder, album.y + border + (squareSize * y) + (border * y), squareSize / 2 - subBorder, squareSize)
+          } else {
+            ctx.fillRect(album.x + border + (squareSize * x) + (border * x), album.y + border + (squareSize * y) + (border * y), squareSize, squareSize)
+          }
+        }
+        //  If uppercase set light grey dot
+        if (isUpperCase) {
           ctx.fillStyle = 'black'
           ctx.beginPath()
-          ctx.arc(w - (dx + album.x + (album.w / 2)), dy + album.y + (album.h / 2), album.w / 80, 0, 2 * Math.PI)
+          ctx.moveTo(album.x + border + (squareSize * x) + (border * x) - (squareSize / 80), album.y + border + (squareSize * y) + (border * y) - (squareSize / 80))
+          ctx.lineTo(album.x + border + (squareSize * x) + (border * x) + (squareSize * 0.2), album.y + border + (squareSize * y) + (border * y) - (squareSize / 80))
+          ctx.lineTo(album.x + border + (squareSize * x) + (border * x) - (squareSize / 80), album.y + border + (squareSize * y) + (border * y) + (squareSize * 0.2))
+          ctx.closePath()
           ctx.fill()
         }
       }
-
-      hashPoints++
     }
   }
 
+  if (features.type === 'circles') {
+    const circles = [{
+      segments: 21,
+      outerRadius: 1,
+      innerRadius: 0.8,
+      gap: 10
+    },
+    {
+      segments: 17,
+      outerRadius: 0.78,
+      innerRadius: 0.58,
+      gap: 11
+    },
+    {
+      segments: 11,
+      outerRadius: 0.56,
+      innerRadius: 0.36,
+      gap: 12
+    }
+    ]
+    let hashPoints = 2
+    let loop = 0
+    for (const circle of circles) {
+      const outerAngle = 360 / circle.segments
+      const outerAngleBorder = outerAngle / circle.gap
+      for (let segment = 0; segment < circle.segments; segment++) {
+        //  Set radiuses
+        const outerRadius = circle.outerRadius
+        const innerRadius = circle.innerRadius
+        const middleRadius = innerRadius + ((outerRadius - innerRadius) / 2)
+
+        const hashLetter = fxhash[hashPoints].toLowerCase()
+        const isUpperCase = !(hashLetter === fxhash[hashPoints])
+        // console.log(hashPoints + ' >> ' + fxhash[hashPoints] + ' >> ' + hashLetter + ' >> ' + isUpperCase)
+        const colours = features.alphaMap[hashLetter].colours
+        const c1 = features.colours[colours[0]]
+        let c2 = null
+        if (colours.length > 1) c2 = features.colours[colours[1]]
+
+        const startAngle = segment * outerAngle + (outerAngleBorder / 2) + 180
+        const endAngle = (segment + 1) * outerAngle - (outerAngleBorder / 2) + 180
+        const r1 = ((album.h / 2) - border) * outerRadius * 0.95
+        const r2 = ((album.h / 2) - border) * middleRadius * 0.95
+        const r3 = ((album.h / 2) - border) * innerRadius * 0.95
+
+        const x0 = Math.sin(startAngle * Math.PI / 180) * r1
+        const y0 = Math.cos(startAngle * Math.PI / 180) * r1
+        const x1 = Math.sin(startAngle * Math.PI / 180) * r2
+        const y1 = Math.cos(startAngle * Math.PI / 180) * r2
+        const x2 = Math.sin(endAngle * Math.PI / 180) * r3
+        const y2 = Math.cos(endAngle * Math.PI / 180) * r3
+        const x3 = Math.sin(endAngle * Math.PI / 180) * r2
+        const y3 = Math.cos(endAngle * Math.PI / 180) * r2
+
+        if (c2) {
+          ctx.fillStyle = `hsl(${c2.h}, ${c2.s}%, ${c2.l}%)`
+          ctx.beginPath()
+          ctx.moveTo(w - (x0 + album.x + (album.w / 2)), y0 + album.y + (album.h / 2))
+          //  Go one way
+          for (let a = 0; a < 24; a++) {
+            const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r1
+            const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r1
+            ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          }
+          ctx.lineTo(w - (x3 + album.x + (album.w / 2)), y3 + album.y + (album.h / 2))
+          //  Now go the other way
+          for (let a = 23; a >= 0; a--) {
+            const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
+            const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
+            ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          }
+          ctx.closePath()
+          ctx.fill()
+
+          ctx.fillStyle = `hsl(${c1.h}, ${c1.s}%, ${c1.l}%)`
+          ctx.beginPath()
+          ctx.moveTo(w - (x1 + album.x + (album.w / 2)), y1 + album.y + (album.h / 2))
+          //  Go one way
+          for (let a = 0; a < 24; a++) {
+            const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
+            const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
+            ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          }
+          ctx.lineTo(w - (x2 + album.x + (album.w / 2)), y2 + album.y + (album.h / 2))
+          //  Now go the other way
+          for (let a = 23; a >= 0; a--) {
+            const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r3
+            const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r3
+            ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          }
+          ctx.closePath()
+          ctx.fill()
+
+          //  Now draw a line between them
+          const x = Math.sin((startAngle + ((endAngle - startAngle) * 0 / 23)) * Math.PI / 180) * r2
+          const y = Math.cos((startAngle + ((endAngle - startAngle) * 0 / 23)) * Math.PI / 180) * r2
+          ctx.strokeStyle = 'black'
+          ctx.lineWidth = album.w / 120
+          ctx.beginPath()
+          ctx.moveTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          for (let a = 1; a < 24; a++) {
+            const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
+            const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r2
+            ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          }
+          ctx.stroke()
+        } else {
+          ctx.fillStyle = `hsl(${c1.h}, ${c1.s}%, ${c1.l}%)`
+          ctx.beginPath()
+          ctx.moveTo(w - (x0 + album.x + (album.w / 2)), y0 + album.y + (album.h / 2))
+          //  Go one way
+          for (let a = 0; a < 24; a++) {
+            const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r1
+            const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r1
+            ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          }
+          ctx.lineTo(w - (x2 + album.x + (album.w / 2)), y2 + album.y + (album.h / 2))
+          //  Now go the other way
+          for (let a = 23; a >= 0; a--) {
+            const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r3
+            const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * r3
+            ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          }
+          ctx.closePath()
+          ctx.fill()
+
+          //  If number set black dot
+          if ('1234567890'.includes(hashLetter)) {
+            const dx = Math.sin((startAngle + ((endAngle - startAngle) * 0.5)) * Math.PI / 180) * (r3 + ((r1 - r3) / 2))
+            const dy = Math.cos((startAngle + ((endAngle - startAngle) * 0.5)) * Math.PI / 180) * (r3 + ((r1 - r3) / 2))
+            ctx.fillStyle = 'black'
+            ctx.beginPath()
+            ctx.arc(w - (dx + album.x + (album.w / 2)), dy + album.y + (album.h / 2), album.w / 80, 0, 2 * Math.PI)
+            ctx.fill()
+          }
+        }
+
+        //  If uppercase set light grey dot
+        if (isUpperCase) {
+          ctx.fillStyle = 'black'
+
+          const cx0 = Math.sin((startAngle - (outerAngleBorder / 4)) * Math.PI / 180) * (r1 * 1.01)
+          const cy0 = Math.cos((startAngle - (outerAngleBorder / 4)) * Math.PI / 180) * (r1 * 1.01)
+          const cx2 = Math.sin((startAngle - (outerAngleBorder / 4)) * Math.PI / 180) * (r1 * 0.95)
+          const cy2 = Math.cos((startAngle - (outerAngleBorder / 4)) * Math.PI / 180) * (r1 * 0.95)
+
+          ctx.beginPath()
+          ctx.moveTo(w - (cx0 + album.x + (album.w / 2)), cy0 + album.y + (album.h / 2))
+          //  Go one way
+          for (let a = 0; a < 6 - loop; a++) {
+            const x = Math.sin((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * (r1 * 1.01)
+            const y = Math.cos((startAngle + ((endAngle - startAngle) * a / 23)) * Math.PI / 180) * (r1 * 1.01)
+            ctx.lineTo(w - (x + album.x + (album.w / 2)), y + album.y + (album.h / 2))
+          }
+          ctx.lineTo(w - (cx2 + album.x + (album.w / 2)), cy2 + album.y + (album.h / 2))
+          ctx.closePath()
+          ctx.fill()
+        }
+
+        hashPoints++
+      }
+      loop++
+    }
+  }
   //  Now do it all over again
   // nextFrame = window.requestAnimationFrame(drawCanvas)
 }
