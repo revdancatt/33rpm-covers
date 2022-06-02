@@ -45,7 +45,21 @@ const makeFeatures = () => {
     }
   }
 
-  features.type = 'circles'
+  const typeChoice = fxrand()
+  features.type = 'grid'
+  window.$fxhashFeatures['Cover type'] = 'Grid'
+  if (typeChoice < 0.75) {
+    features.type = 'pills'
+    window.$fxhashFeatures['Cover type'] = 'Pills'
+  }
+  if (typeChoice < 0.50) {
+    features.type = 'strip'
+    window.$fxhashFeatures['Cover type'] = 'Strip'
+  }
+  if (typeChoice < 0.25) {
+    features.type = 'circles'
+    window.$fxhashFeatures['Cover type'] = 'Circles'
+  }
 
   features.colours = [{
     h: 155,
@@ -281,7 +295,6 @@ const makeFeatures = () => {
       split: 'horizontal'
     }
   }
-  console.log(fxhash)
 }
 
 //  Call the above make features, so we'll have the window.$fxhashFeatures available
@@ -423,7 +436,6 @@ const drawCanvas = async () => {
         const hashOffset = 2 + (y * squares) + x
         const hashLetter = fxhash[hashOffset].toLowerCase()
         const isLowerCase = (hashLetter === fxhash[hashOffset])
-        console.log(hashOffset + ' >> ' + fxhash[hashOffset] + ' >> ' + hashLetter + ' >> ' + isLowerCase)
         const colours = features.alphaMap[hashLetter].colours
         const c1 = features.colours[colours[0]]
         let c2 = null
@@ -457,6 +469,77 @@ const drawCanvas = async () => {
     }
   }
 
+  //  Now draw the squares
+  if (features.type === 'pills') {
+    const squares = 7
+    const squareSize = (album.w - (border * 8)) / squares
+    for (let y = 0; y < squares; y++) {
+      for (let x = 0; x < squares; x++) {
+        const hashOffset = 2 + (y * squares) + x
+        const hashLetter = fxhash[hashOffset].toLowerCase()
+        const isLowerCase = (hashLetter === fxhash[hashOffset])
+        const colours = features.alphaMap[hashLetter].colours
+        const c1 = features.colours[colours[0]]
+        let c2 = null
+        if (colours.length > 1) c2 = features.colours[colours[1]]
+        ctx.fillStyle = `hsl(${c1.h}, ${c1.s}%, ${c1.l}%)`
+
+        let angleMod = 45
+        if (!isLowerCase || '1234567890'.includes(hashLetter)) angleMod += 90
+        let tinyOffset = squareSize / 64
+        if (c2 && c2 === c1) tinyOffset *= -1
+        //  Do the smaller side first
+        ctx.save()
+        ctx.translate(album.x + border + (squareSize * x) + (border * x) + (squareSize / 2), album.y + border + (squareSize * y) + (border * y) + (squareSize / 2))
+        ctx.rotate(angleMod * Math.PI / 180)
+        ctx.scale(0.975, -0.975)
+        ctx.beginPath()
+        ctx.moveTo(tinyOffset, squareSize / 4)
+        ctx.lineTo(-squareSize / 4, squareSize / 4)
+        ctx.arc(-squareSize / 4, 0, squareSize / 4, 0.5 * Math.PI, 1.5 * Math.PI, false)
+        ctx.lineTo(tinyOffset, -squareSize / 4)
+        ctx.closePath()
+        ctx.fill()
+        ctx.restore()
+
+        //  Now do the larger size
+        if (c2) ctx.fillStyle = `hsl(${c2.h}, ${c2.s}%, ${c2.l}%)`
+        ctx.save()
+        ctx.translate(album.x + border + (squareSize * x) + (border * x) + (squareSize / 2), album.y + border + (squareSize * y) + (border * y) + (squareSize / 2))
+        ctx.rotate((angleMod + 180) * Math.PI / 180)
+        ctx.scale(1, -1)
+        ctx.beginPath()
+        ctx.moveTo(0, squareSize / 4)
+        ctx.lineTo(-squareSize / 4, squareSize / 4)
+        ctx.arc(-squareSize / 4, 0, squareSize / 4, 0.5 * Math.PI, 1.5 * Math.PI, false)
+        ctx.lineTo(0, -squareSize / 4)
+        ctx.closePath()
+        ctx.fill()
+        ctx.restore()
+
+        //   If we are numeric, then we need to mark that
+        if ('1234567890'.includes(hashLetter)) {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+          ctx.save()
+          ctx.translate(album.x + border + (squareSize * x) + (border * x) + (squareSize / 2), album.y + border + (squareSize * y) + (border * y) + (squareSize / 2))
+          ctx.rotate((angleMod) * Math.PI / 180)
+          ctx.scale(1, -1)
+          ctx.beginPath()
+          ctx.arc((squareSize / 4) - (squareSize / 100), (squareSize / 100), squareSize / 5, 0, 2 * Math.PI)
+          ctx.fill()
+
+          ctx.fillStyle = `hsl(${c1.h}, ${c1.s}%, ${c1.l}%)`
+          if (c2) ctx.fillStyle = `hsl(${c2.h}, ${c2.s}%, ${c2.l}%)`
+          ctx.beginPath()
+          ctx.arc((squareSize / 4) - (squareSize / 28), -(squareSize / 50), squareSize / 4.6, 0, 2 * Math.PI, false)
+          ctx.fill()
+
+          ctx.restore()
+        }
+      }
+    }
+  }
+
   if (features.type === 'strip') {
     const subBorder = border / 4
     const squareSize = (album.h - (border * 2) - (subBorder * 16)) / 17
@@ -464,11 +547,10 @@ const drawCanvas = async () => {
 
     for (let x = 0; x < 3; x++) {
       for (let y = 0; y < 17; y++) {
-        const hashOffset = 2 + (x * 17) + y
+        const hashOffset = 0 + (x * 17) + y
         if (hashOffset > 50) break
         const hashLetter = fxhash[hashOffset].toLowerCase()
         const isLowerCase = (hashLetter === fxhash[hashOffset])
-        console.log(hashOffset + ' >> ' + fxhash[hashOffset] + ' >> ' + hashLetter + ' >> ' + isLowerCase)
         const colours = features.alphaMap[hashLetter].colours
         const c1 = features.colours[colours[0]]
         let c2 = null
@@ -533,7 +615,7 @@ const drawCanvas = async () => {
 
   if (features.type === 'circles') {
     const circles = [{
-      segments: 21,
+      segments: 17,
       outerRadius: 1,
       innerRadius: 0.8,
       gap: 10
@@ -545,13 +627,13 @@ const drawCanvas = async () => {
       gap: 11
     },
     {
-      segments: 11,
+      segments: 17,
       outerRadius: 0.56,
       innerRadius: 0.36,
       gap: 12
     }
     ]
-    let hashPoints = 2
+    let hashPoints = 0
     let loop = 0
     for (const circle of circles) {
       const outerAngle = 360 / circle.segments
@@ -564,7 +646,6 @@ const drawCanvas = async () => {
 
         const hashLetter = fxhash[hashPoints].toLowerCase()
         const isLowerCase = (hashLetter === fxhash[hashPoints])
-        // console.log(hashPoints + ' >> ' + fxhash[hashPoints] + ' >> ' + hashLetter + ' >> ' + isLowerCase)
         const colours = features.alphaMap[hashLetter].colours
         const c1 = features.colours[colours[0]]
         let c2 = null
